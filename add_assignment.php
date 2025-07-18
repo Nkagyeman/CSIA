@@ -15,7 +15,7 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Initialize variables
+// Initialize
 $assignment_data = [
     'subject_id' => '',
     'title' => '',
@@ -26,12 +26,12 @@ $assignment_data = [
 $error = '';
 $success = '';
 
-// Rate limiting - NEW CODE ADDED
+// Rate limiting
 $rate_limit_key = 'assignment_add_' . $_SESSION['user_id'];
-$max_attempts = 5; // Maximum allowed attempts
-$time_period = 60; // Time period in seconds (1 minute)
+$max_attempts = 5;
+$time_period = 60; // 1 minute
 
-// Get user's subjects for dropdown
+// Fetch subjects
 $subjects = [];
 $stmt = $conn->prepare("SELECT subject_id, subject_name FROM subjects WHERE user_id = ?");
 $stmt->bind_param("i", $_SESSION['user_id']);
@@ -42,89 +42,75 @@ while ($row = $result->fetch_assoc()) {
 }
 $stmt->close();
 
-// Form submission handling
+// Handle form
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Check rate limit - NEW CODE ADDED
     $current_time = time();
     $attempts = $_SESSION[$rate_limit_key]['attempts'] ?? 0;
     $last_attempt_time = $_SESSION[$rate_limit_key]['time'] ?? 0;
-    
-    if ($current_time - $last_attempt_time < $time_period && $attempts >= $max_attempts) {
-        $error = "You've added too many assignments recently. Please wait a minute before adding another.";
+
+    $assignment_data = [
+        'subject_id' => $_POST['subject_id'],
+        'title' => trim($_POST['title']),
+        'description' => trim($_POST['description']),
+        'deadline' => $_POST['deadline'],
+        'priority' => $_POST['priority']
+    ];
+
+    // Validate input
+    if (empty($assignment_data['subject_id'])) {
+        $error = "Please select a subject";
+    } elseif (empty($assignment_data['title'])) {
+        $error = "Assignment title cannot be empty";
+    } elseif (empty($assignment_data['deadline']) || !strtotime($assignment_data['deadline'])) {
+        $error = "Invalid deadline format";
+    } elseif ($current_time - $last_attempt_time < $time_period && $attempts >= $max_attempts) {
+        $error = "You've added too many assignments recently. Please wait a minute.";
     } else {
-        $assignment_data = [
-            'subject_id' => $_POST['subject_id'],
-            'title' => trim($_POST['title']),
-            'description' => trim($_POST['description']),
-            'deadline' => $_POST['deadline'],
-            'priority' => $_POST['priority']
-        ];
-
-        // Validate input
-        if (empty($assignment_data['subject_id'])) {
-            $error = "Please select a subject";
-        } elseif (empty($assignment_data['title'])) {
-            $error = "Assignment title cannot be empty";
-        } elseif (strtotime($assignment_data['deadline']) < time()) {
-            $error = "Deadline must be in the future";
+        // Update rate limit
+        if ($current_time - $last_attempt_time > $time_period) {
+            $_SESSION[$rate_limit_key] = ['attempts' => 1, 'time' => $current_time];
         } else {
-            // Update rate limiting counters - NEW CODE ADDED
-            if ($current_time - $last_attempt_time > $time_period) {
-                // Reset counter if time period has passed
-                $_SESSION[$rate_limit_key] = [
-                    'attempts' => 1,
-                    'time' => $current_time
-                ];
-            } else {
-                // Increment counter
-                $_SESSION[$rate_limit_key] = [
-                    'attempts' => $attempts + 1,
-                    'time' => $last_attempt_time
-                ];
-            }
-
-            // Insert new assignment
-            $stmt = $conn->prepare("INSERT INTO assignments 
-                                  (user_id, subject_id, title, description, deadline, priority) 
-                                  VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("iissss", 
-                $_SESSION['user_id'],
-                $assignment_data['subject_id'],
-                $assignment_data['title'],
-                $assignment_data['description'],
-                $assignment_data['deadline'],
-                $assignment_data['priority']
-            );
-            
-            if ($stmt->execute()) {
-                $success = "Assignment added successfully!";
-                $assignment_data = [
-                    'subject_id' => '',
-                    'title' => '',
-                    'description' => '',
-                    'deadline' => date('Y-m-d\TH:i'),
-                    'priority' => 'medium'
-                ];
-                
-                // Clear any saved draft
-                if (isset($_SESSION['unsaved_assignment'])) {
-                    unset($_SESSION['unsaved_assignment']);
-                }
-            } else {
-                $error = "Error adding assignment: " . $conn->error;
-            }
-            $stmt->close();
+            $_SESSION[$rate_limit_key]['attempts'] = $attempts + 1;
         }
+        // Extract values
+        $subject_id = $assignment_data['subject_id'];
+         $title = $assignment_data['title'];
+         $description = $assignment_data['description'];
+         $deadline = $assignment_data['deadline'];
+         $priority = $assignment_data['priority'];
+
+        // Insert assignment
+       $stmt = $conn->prepare("INSERT INTO assignments 
+    (user_id, subject_id, title, description, deadline, priority) 
+    VALUES (?, ?, ?, ?, ?, ?)");
+$stmt->bind_param("iissss", $_SESSION['user_id'], $subject_id, $title, $description, $deadline, $priority);
+
+
+        if ($stmt->execute()) {
+            $success = "Assignment added successfully!";
+            $assignment_data = [
+                'subject_id' => '',
+                'title' => '',
+                'description' => '',
+                'deadline' => date('Y-m-d\TH:i'),
+                'priority' => 'medium'
+            ];
+            unset($_SESSION['unsaved_assignment']);
+        } else {
+            $error = "Error adding assignment: " . $conn->error;
+        }
+
+        $stmt->close();
     }
 }
 
-// Check for unsaved draft
 if (isset($_SESSION['unsaved_assignment'])) {
     $assignment_data = array_merge($assignment_data, $_SESSION['unsaved_assignment']);
 }
 
 $conn->close();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -430,6 +416,9 @@ $conn->close();
         </header>
 
         <div class="form-container">
+            <div id="unsaved-warning" style="display: none; background-color: #fff3cd; color: #856404; padding: 10px; margin-bottom: 15px; border: 1px solid #ffeeba; border-radius: 4px;">
+    ⚠️ You have unsaved changes. Don’t forget to save!
+</div>
             <div class="form-header">
                 <h1 class="form-title">Add New Assignment</h1>
                 <p class="form-subtitle">Organize your tasks with deadlines and priorities</p>
@@ -551,34 +540,60 @@ $conn->close();
         });
 
         // Warn before leaving with unsaved changes
-        window.addEventListener('beforeunload', (e) => {
-            const dirtyFields = document.querySelectorAll('.dirty');
-            if (dirtyFields.length > 0) {
-                // Save to server session before leaving
-                const formData = {
-                    subject_id: document.getElementById('subject_id').value,
-                    title: document.getElementById('title').value,
-                    description: document.getElementById('description').value,
-                    deadline: document.getElementById('deadline').value,
-                    priority: document.querySelector('input[name="priority"]:checked').value
-                };
+        let isFormDirty = false;
+
+// Mark fields as dirty
+document.querySelectorAll('input, textarea, select').forEach((el) => {
+    el.addEventListener('input', () => {
+        el.classList.add('dirty');
+        isFormDirty = true;
+        showUnsavedWarning(); // Show custom warning
+    });
+});
+
+// Show custom warning in the UI
+function showUnsavedWarning() {
+    const warningBox = document.getElementById('unsaved-warning');
+    if (warningBox) {
+        warningBox.style.display = 'block';
+    }
+}
+
+// Save draft when navigating via internal buttons/links
+document.querySelectorAll('a, button').forEach((el) => {
+    el.addEventListener('click', (e) => {
+        if (isFormDirty) {
+            e.preventDefault();
+
+            const formData = {
+                subject_id: document.getElementById('subject_id').value,
+                title: document.getElementById('title').value,
+                description: document.getElementById('description').value,
+                deadline: document.getElementById('deadline').value,
+                priority: document.querySelector('input[name="priority"]:checked')?.value
+            };
+
+            fetch('save_assignment_draft.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            }).then(() => {
+                isFormDirty = false;
+                window.location = el.href || el.dataset.href || el.getAttribute('formaction') || '/';
+            });
+        }
+    });
+});
+       
                 
-                fetch('save_assignment_draft.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(formData)
-                });
-                
-                // Show warning
-                e.preventDefault();
-                e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
-            }
-        });
+              
 
         // Load draft from session storage
         document.addEventListener('DOMContentLoaded', () => {
+        const now = new Date().toISOString().slice(0,16);
+         document.getElementById('deadline').setAttribute('min', now);
             const draft = sessionStorage.getItem('assignmentDraft');
             if (draft) {
                 const formData = JSON.parse(draft);

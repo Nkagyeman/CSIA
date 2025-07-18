@@ -1,0 +1,56 @@
+/bin/sh: /usr/bin/php: No such file or directory
+/bin/sh: /usr/bin/php: No such file or directory
+/bin/sh: /usr/bin/php: No such file or directory
+/bin/sh: /usr/bin/php: No such file or directory
+/bin/sh: /usr/bin/php: No such file or directory
+/bin/sh: /usr/bin/php: No such file or directory
+/bin/sh: /usr/bin/php: No such file or directory
+/bin/sh: /usr/bin/php: No such file or directory
+Email sent to: nkaagyeman@gmail.com (Status: 202)
+Email sent to: nkaagyeman@gmail.com (Status: 202)
+Email sent to: nkaagyeman@gmail.com (Status: 202)
+Email sent to: nkaagyeman@gmail.com (Status: 202)
+Email sent to: nkaagyeman@gmail.com (Status: 202)
+Email sent to: nkaagyeman@gmail.com (Status: 202)
+Email sent to: nkaagyeman@gmail.com (Status: 202)
+Email sent to: nkaagyeman@gmail.com (Status: 202)
+Email sent to: nkaagyeman@gmail.com (Status: 202)
+Email sent to: nkaagyeman@gmail.com (Status: 202)
+Email sent to: nkaagyeman@gmail.com (Status: 202)
+Email sent to: nkaagyeman@gmail.com (Status: 202)
+Email sent to: nkaagyeman@gmail.com (Status: 202)
+Email sent to: nkaagyeman@gmail.com (Status: 202)
+Email sent to: nkaagyeman@gmail.com (Status: 202)
+Email sent to: nkaagyeman@gmail.com (Status: 202)
+Email sent to: nkaagyeman@gmail.com (Status: 202)
+Email sent to: nkaagyeman@gmail.com (Status: 202)
+PHP Warning:  Undefined variable $status in /Applications/XAMPP/xamppfiles/htdocs/CSIA/send_reminders.php on line 10
+
+Warning: Undefined variable $status in /Applications/XAMPP/xamppfiles/htdocs/CSIA/send_reminders.php on line 10
+PHP Fatal error:  Uncaught Error: mysqli object is already closed in /Applications/XAMPP/xamppfiles/htdocs/CSIA/send_reminders.php:36
+Stack trace:
+#0 /Applications/XAMPP/xamppfiles/htdocs/CSIA/send_reminders.php(36): mysqli->prepare('\n    SELECT a.t...')
+#1 {main}
+  thrown in /Applications/XAMPP/xamppfiles/htdocs/CSIA/send_reminders.php on line 36
+
+Fatal error: Uncaught Error: mysqli object is already closed in /Applications/XAMPP/xamppfiles/htdocs/CSIA/send_reminders.php:36
+Stack trace:
+#0 /Applications/XAMPP/xamppfiles/htdocs/CSIA/send_reminders.php(36): mysqli->prepare('\n    SELECT a.t...')
+#1 {main}
+  thrown in /Applications/XAMPP/xamppfiles/htdocs/CSIA/send_reminders.php on line 36
+PHP Warning:  Undefined variable $status in /Applications/XAMPP/xamppfiles/htdocs/CSIA/send_reminders.php on line 10
+
+Warning: Undefined variable $status in /Applications/XAMPP/xamppfiles/htdocs/CSIA/send_reminders.php on line 10
+PHP Fatal error:  Uncaught Error: mysqli object is already closed in /Applications/XAMPP/xamppfiles/htdocs/CSIA/send_reminders.php:36
+Stack trace:
+#0 /Applications/XAMPP/xamppfiles/htdocs/CSIA/send_reminders.php(36): mysqli->prepare('\n    SELECT a.t...')
+#1 {main}
+  thrown in /Applications/XAMPP/xamppfiles/htdocs/CSIA/send_reminders.php on line 36
+
+Fatal error: Uncaught Error: mysqli object is already closed in /Applications/XAMPP/xamppfiles/htdocs/CSIA/send_reminders.php:36
+Stack trace:
+#0 /Applications/XAMPP/xamppfiles/htdocs/CSIA/send_reminders.php(36): mysqli->prepare('\n    SELECT a.t...')
+#1 {main}
+  thrown in /Applications/XAMPP/xamppfiles/htdocs/CSIA/send_reminders.php on line 36
+Email sent to: nkaagyeman@gmail.com (Status: 202)
+Email sent to: nkaagyeman@gmail.com (Status: 202)

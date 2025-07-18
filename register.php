@@ -34,7 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             die("<p class='error-message'>Database connection failed: " . $conn->connect_error . "</p>");
         }
 
-        $username = $conn->real_escape_string(trim($_POST['username']));
+               $username = $conn->real_escape_string(trim($_POST['username']));
+        $email = $conn->real_escape_string(trim($_POST['email'])); // <-- Add this line
         $password = trim($_POST['password']);
         $confirm_password = trim($_POST['confirm_password']);
 
@@ -52,16 +53,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bind_param("s", $username);
             $stmt->execute();
             $stmt->store_result();
-            
+
             if ($stmt->num_rows > 0) {
                 $error = "Username already exists!";
             } else {
                 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-                $insert_stmt = $conn->prepare("INSERT INTO users (username, password) VALUES (?, ?)");
-                $insert_stmt->bind_param("ss", $username, $hashed_password);
-                
-                if ($insert_stmt->execute()) {
-                    // Regenerate CSRF token after successful action
+                $stmt->close(); // Close previous SELECT stmt
+
+                $stmt = $conn->prepare("INSERT INTO users (username, password, email) VALUES (?, ?, ?)");
+                $stmt->bind_param("sss", $username, $hashed_password, $email);
+
+                if ($stmt->execute()) {
                     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
                     header("Location: register.php?registered=1");
                     exit();
@@ -70,6 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             $stmt->close();
+
         }
         $conn->close();
     }
@@ -260,6 +263,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
                 
                 <input type="text" name="username" placeholder="Username (min 4 chars)" required minlength="4">
+                
+                  <input type="email" name="email" placeholder="Email" id="email" required>
                 
                 <input type="password" name="password" placeholder="Password" required 
                        oninput="checkPasswordStrength()">
